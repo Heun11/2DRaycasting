@@ -13,15 +13,20 @@ def normalize(v):
     mag=math.sqrt((v[0]**2)+(v[1]**2))
     return [v[0]/mag,v[1]/mag]
 
+def find_lowest_size_between_points(pos, pts):
+    sizes = []
+    for pt in pts:
+        sizes.append(math.sqrt(((pos[0]-pt[0])**2)+((pos[1]-pt[1])**2)))
+    return pts[sizes.index(min(sizes))]
+
 class Ray:
     def __init__(self, pos, dir_):
         self.pos = pos
         self.dir = dir_
-    
-    def show(self):
-        Rectangle(pos=[self.pos[0], self.pos[1]], size=[10,10])
-        # Line(points=[self.pos[0]+self.dir[0]*1000, self.pos[1]+self.dir[1]*1000, self.pos[0], self.pos[1]], width=0.5)
-        Line(points=[self.pos[0]+self.dir[0]*100, self.pos[1]+self.dir[1]*100, self.pos[0], self.pos[1]], width=0.5)
+
+    def show(self, pt):
+        Line(points=[pt[0], pt[1], self.pos[0], self.pos[1]], width=0.5)
+        Rectangle(pos=pt, size=[5,5])
 
     def set_dir(self, dir_):
         self.dir=[dir_[0]-self.pos[0], dir_[1]-self.pos[1]]
@@ -51,10 +56,72 @@ class Ray:
         else:
             return 
 
-class Particle:
+class Player:
     def __init__(self):
         self.pos = [300,300]
-        self.rays = []
+        self.rays = [Ray(self.pos, [1,0])]
+
+        self.dir = {
+            "up":False,
+            "down":False,
+            "right":False,
+            "left":False
+        }
+        self.vel = 3
+
+    def update(self):
+        x_v = 0
+        y_v = 0
+
+        if self.dir["up"]:
+            y_v = self.vel
+
+        if self.dir["down"]:
+            y_v = -self.vel
+
+        if self.dir["right"]:
+            x_v = self.vel
+
+        if self.dir["left"]:
+            x_v = -self.vel
+
+        self.pos[0]+=x_v
+        self.pos[1]+=y_v
+
+        Rectangle(pos=[self.pos[0], self.pos[1]], size=[10,10])
+
+    def cast(self, walls):
+        for ray in self.rays:
+            pts = []
+            for wall in walls:
+                pt = ray.cast(wall)
+                if pt:
+                    pts.append(pt)
+            if len(pts)>0:
+                ray.show(find_lowest_size_between_points(self.pos, pts))
+
+    def look(self, pos):
+        self.rays[0].set_dir(pos)
+
+    def keys_down(self, key):
+        if key == "w" or key == "up":
+            self.dir["up"] = True
+        if key == "s" or key == "down":
+            self.dir["down"] = True
+        if key == "a" or key == "left":
+            self.dir["left"] = True
+        if key == "d" or key == "right":
+            self.dir["right"] = True
+
+    def keys_up(self, key):
+        if key == "w" or key == "up":
+            self.dir["up"] = False
+        if key == "s" or key == "down":
+            self.dir["down"] = False
+        if key == "a" or key == "left":
+            self.dir["left"] = False
+        if key == "d" or key == "right":
+            self.dir["right"] = False
 
 class Boundry:
     def __init__(self, a=[0,0], b=[100,100]):
