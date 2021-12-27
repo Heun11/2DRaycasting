@@ -11,7 +11,9 @@ import math
 
 def normalize(v):
     mag=math.sqrt((v[0]**2)+(v[1]**2))
-    return [v[0]/mag,v[1]/mag]
+    if mag!=0:
+        return [v[0]/mag,v[1]/mag]
+    return [0,0]
 
 def find_lowest_size_between_points(pos, pts):
     sizes = []
@@ -31,6 +33,7 @@ class Ray:
     def set_dir(self, dir_):
         self.dir=[dir_[0]-self.pos[0], dir_[1]-self.pos[1]]
         self.dir=normalize(self.dir)
+        # self.dir=dir_
 
     def cast(self, wall):
         x1 = wall.a[0]
@@ -59,7 +62,7 @@ class Ray:
 class Player:
     def __init__(self):
         self.pos = [300,300]
-        self.rays = [Ray(self.pos, [1,0])]
+        self.rays = [Ray(self.pos, [0,0])]
 
         self.dir = {
             "up":False,
@@ -67,6 +70,12 @@ class Player:
             "right":False,
             "left":False
         }
+
+        self.look_dir = {
+            "right":False,
+            "left":False
+        }
+
         self.vel = 3
 
     def update(self):
@@ -113,6 +122,11 @@ class Player:
         if key == "d" or key == "right":
             self.dir["right"] = True
 
+        if key == "e":
+            self.look_dir["right"] = True
+        if key == "q":
+            self.look_dir["left"] = True
+
     def keys_up(self, key):
         if key == "w" or key == "up":
             self.dir["up"] = False
@@ -122,6 +136,11 @@ class Player:
             self.dir["left"] = False
         if key == "d" or key == "right":
             self.dir["right"] = False
+
+        if key == "e":
+            self.look_dir["right"] = False
+        if key == "q":
+            self.look_dir["left"] = False
 
 class Boundry:
     def __init__(self, a=[0,0], b=[100,100]):

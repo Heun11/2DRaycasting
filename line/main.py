@@ -16,7 +16,8 @@ class GameWindow(Screen):
         Clock.schedule_interval(self.update,1/60)
 
         self.player = Player()
-        self.walls = [Boundry(a=[500,200], b=[500,400]), Boundry(a=[600,200], b=[600,400])]
+        self.walls = [Boundry(a=[500,200], b=[500,400]), Boundry(a=[300,200], b=[300,400]),
+                        Boundry(a=[300,400], b=[500,400]), Boundry(a=[300,200], b=[500,200])]
 
     def update(self,dt):
         # print(1/dt)
