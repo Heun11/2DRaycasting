@@ -1,4 +1,4 @@
-from os import WIFCONTINUED
+from os import WIFCONTINUED, walk
 from types import CellType
 import kivy
 from kivy.app import App
@@ -34,7 +34,9 @@ class Player:
         self.pos = [96,224]
         self.size = [10,10]
         self.angle = math.radians(60)
-        self.rays = 1
+        self.rays = 30
+        self.fov = 60
+        self.rayAdistance = self.fov/self.rays
 
         self.dx=math.cos(self.angle)*5
         self.dy=math.sin(self.angle)*5
@@ -49,53 +51,80 @@ class Player:
     def castRays(self):
         rayA = math.degrees(self.angle)+0.0001
         for i in range(self.rays):
-            ptX = 0
-            ptY = 0
+            HptX = 0
+            HptY = 0
 
-            Ya = 0
-            Xa = 0
+            HYa = 0
+            HXa = 0
+
+            VptX = 0
+            VptY = 0
+
+            VYa = 0
+            VXa = 0
 
             # Horizontal
-            # if rayA<180 and rayA>0: # up
-            #     ptY = math.floor(self.pos[1]/CELL_SIZE)*CELL_SIZE+CELL_SIZE
-            #     ptX = self.pos[0]+(self.pos[1]-ptY)/math.tan(math.radians(rayA))
-            #     Ya=CELL_SIZE
-            #     Xa=(CELL_SIZE/math.tan(math.radians(rayA)))
-
-            # else: # down
-            #     ptY = math.floor(self.pos[1]/CELL_SIZE)*CELL_SIZE-1
-            #     ptX = self.pos[0]+(self.pos[1]-ptY)/math.tan(math.radians(rayA))
-            #     Ya=-CELL_SIZE
-            #     Xa=-(CELL_SIZE/math.tan(math.radians(rayA)))
-
-
-            #####################################################
-            # https://permadi.com/1996/05/ray-casting-tutorial-7/
-            #####################################################
-
-
             if rayA<180 and rayA>0: # up
-                ptY = math.floor(self.pos[1]/CELL_SIZE)*CELL_SIZE+CELL_SIZE
-                ptX = self.pos[0]+(self.pos[1]-ptY)/math.tan(math.radians(rayA))
+                HptY = math.floor(self.pos[1]/CELL_SIZE)*CELL_SIZE+CELL_SIZE
+                HptX = self.pos[0]-(self.pos[1]-HptY)/math.tan(math.radians(rayA))
+                HYa = CELL_SIZE
+                HXa = CELL_SIZE/math.tan(math.radians(rayA))
 
             else: # down
-                ptY = math.floor(self.pos[1]/CELL_SIZE)*CELL_SIZE-1
-                ptX = self.pos[0]+(self.pos[1]-ptY)/math.tan(math.radians(rayA))
+                HptY = math.floor(self.pos[1]/CELL_SIZE)*CELL_SIZE-1
+                HptX = self.pos[0]-(self.pos[1]-HptY)/math.tan(math.radians(rayA))
+                HYa = -CELL_SIZE
+                HXa = -(CELL_SIZE/math.tan(math.radians(rayA)))
 
-            Rectangle(pos=[ptX, ptY], size=[5,5])
-            Line(points=[self.pos[0], self.pos[1], ptX, ptY], width=0.5)
+            try:
+                wall = MAP[int(HptY/CELL_SIZE)][int(HptX/CELL_SIZE)]
+                while wall == 0:
+                    HptY+=HYa
+                    HptX+=HXa
+                    wall = MAP[int(HptY/CELL_SIZE)][int(HptX/CELL_SIZE)]
+
+                a = abs(self.pos[0]-HptX)
+                b = abs(self.pos[1]-HptY)
+                Hdistance = math.sqrt(a**2+b**2)
+            except:
+                Hdistance = math.inf
 
             # Vertical
             if rayA>90 and rayA<270: # left
-                ptX = math.floor(self.pos[0]/CELL_SIZE)*CELL_SIZE-1
-                ptY = self.pos[1]+(self.pos[0]-ptX)*math.tan(math.radians(rayA))
+                VptX = math.floor(self.pos[0]/CELL_SIZE)*CELL_SIZE-1
+                VptY = self.pos[1]-(self.pos[0]-VptX)*math.tan(math.radians(rayA))
+                VXa = -CELL_SIZE
+                VYa = -CELL_SIZE*math.tan(math.radians(rayA))
 
             else: # right
-                pass
+                VptX = math.floor(self.pos[0]/CELL_SIZE)*CELL_SIZE+CELL_SIZE
+                VptY = self.pos[1]-(self.pos[0]-VptX)*math.tan(math.radians(rayA))
+                VXa = CELL_SIZE
+                VYa = CELL_SIZE*math.tan(math.radians(rayA))
 
-            Rectangle(pos=[ptX, ptY], size=[5,5])
+            try:
+                wall = MAP[int(VptY/CELL_SIZE)][int(VptX/CELL_SIZE)]
+                while wall == 0:
+                    VptY+=VYa
+                    VptX+=VXa
+                    wall = MAP[int(VptY/CELL_SIZE)][int(VptX/CELL_SIZE)]
 
-            # Line(points=[self.pos[0], self.pos[1], rayX, rayY], width=0.5)
+                a = abs(self.pos[0]-VptX)
+                b = abs(self.pos[1]-VptY)
+                Vdistance = math.sqrt(a**2+b**2)
+            except:
+                Vdistance = math.inf
+
+            if Vdistance<Hdistance: # V
+                ptPos = [VptX, VptY]
+            else: # H
+                ptPos = [HptX, HptY]
+
+            Line(points=[self.pos[0], self.pos[1], ptPos[0], ptPos[1]], width=0.5)
+
+            rayA+=self.rayAdistance
+            if rayA>360:
+                rayA-=360
 
     def update(self):
         if self.dir["a"]:
@@ -121,11 +150,10 @@ class Player:
             self.pos[1]+=self.dy
 
         Color(0,1,0,1)
-
         self.castRays()
-        Line(points=[self.pos[0], self.pos[1], self.pos[0]+self.dx*8, self.pos[1]+self.dy*8], width=0.5)
         Rectangle(pos=[self.pos[0], self.pos[1]], size=self.size)
-
+        Color(1,0,0,1)
+        Line(points=[self.pos[0], self.pos[1], self.pos[0]+self.dx*5, self.pos[1]+self.dy*5], width=1.5)
         Color(1,1,1,1)
 
     def keys_down(self, key):
