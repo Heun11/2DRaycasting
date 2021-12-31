@@ -1,5 +1,3 @@
-from os import WIFCONTINUED, walk
-from types import CellType
 import kivy
 from kivy.app import App
 from kivy.core import window
