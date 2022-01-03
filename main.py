@@ -1,4 +1,3 @@
-from logging import disable
 import kivy
 from kivy.app import App
 from kivy.core import window
@@ -9,22 +8,30 @@ from kivy.clock import Clock
 from kivy.graphics import Rectangle, Color, Line
 import math
 
-CELL_SIZE = 64
-Window.size = [CELL_SIZE*20, CELL_SIZE*10]
-# Window.size = [1024*1.5, 512*1.5]
-# CELL_SIZE = 51.2*1.5
+CELL_SIZE = 40
+Window.size = [CELL_SIZE*40, CELL_SIZE*20]
 PI = 3.14159265359
 MAP = [
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,0,0,0,0,0,1],
-    [1,0,0,1,1,1,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,1,2,0,2,1],
-    [1,0,0,0,0,1,0,0,0,1],
-    [1,0,0,0,0,1,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1]
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,1,2,2,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,1,1,1,1,1,2,2,2,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ]
 MAP.reverse()
 
@@ -39,8 +46,8 @@ class Player:
         self.rayAdistance = self.fov/self.rays
         self.rayOffset = Window.size[0]*0.5
 
-        self.dx=math.cos(self.angle)*5
-        self.dy=math.sin(self.angle)*5
+        self.dx=math.cos(self.angle)*self.multSize
+        self.dy=math.sin(self.angle)*self.multSize
 
         self.dir = {
             "w":False,
@@ -50,7 +57,8 @@ class Player:
         }
 
     def castRays(self):
-        rayA = math.degrees(self.angle)+0.0001-self.fov/2
+        rayA = math.degrees(self.angle)+0.0001 - self.fov*0.5
+        # rayA = (math.degrees(self.angle)+0.0001)
         rayB = self.fov/2
         for i in range(self.rays):
             HptX = 0
@@ -128,17 +136,19 @@ class Player:
 
             Line(points=[self.pos[0], self.pos[1], ptPos[0], ptPos[1]], width=0.5)
 
-            size = [(Window.size[0]*0.5)/self.rays, CELL_SIZE/distance*200]
+            size = [(Window.size[0]*0.5)/self.rays, CELL_SIZE/distance*277]
             pos = [self.rayOffset+(size[0]*i), Window.size[1]*0.5-size[1]*0.5]
             if wall==1:
                 Color(1,0,0,1)
             elif wall==2:
                 Color(0,1,0,1)
             Rectangle(size=size, pos=pos)
+
             Color(1,1,1,1)
 
             rayB-=self.rayAdistance
             rayA+=self.rayAdistance
+
             if rayA>360:
                 rayA-=360
 
@@ -168,7 +178,7 @@ class Player:
         self.castRays()
         Rectangle(pos=[self.pos[0], self.pos[1]], size=self.size)
         Color(0,0,1,1)
-        Line(points=[self.pos[0], self.pos[1], self.pos[0]+self.dx*5, self.pos[1]+self.dy*5], width=1.5)
+        Line(points=[self.pos[0], self.pos[1], self.pos[0]+self.dx*20, self.pos[1]+self.dy*20], width=1.5)
         Color(1,1,1,1)
 
     def keys_down(self, key):
@@ -215,8 +225,8 @@ class GameWindow(Screen):
             Color(0.15,0.1,0.1,1)
             Rectangle(size=[Window.size[0]/2, Window.size[1]/2], pos=[Window.size[0]/2,0]) # ground
 
-            for i in range(10):
-                for j in range(10):
+            for i in range(20):
+                for j in range(20):
                     if MAP[i][j]==0:
                         Color(0.2,0.2,0.2,1)
                     elif MAP[i][j]==1:
